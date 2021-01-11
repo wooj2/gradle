@@ -16,9 +16,11 @@
 
 package gradlebuild.integrationtests.tasks
 
+import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 
@@ -37,14 +39,21 @@ abstract class IntegrationTest : DistributionTest() {
     @PathSensitive(PathSensitivity.RELATIVE)
     val samplesDir = gradleInstallationForTest.gradleSnippetsDir
 
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val crossVersionToolingApi: ConfigurableFileCollection
+
     override fun setClasspath(classpath: FileCollection) {
         /*
-         * The 'kotlin-daemon-client.jar' repackages 'native-platform' with all its binaries.
+         * - If a Tooling API of another Gradle version is provided for cross-version testings,
+         * put it first so that its classes are preferred by the test runner.
+         *
+         * - The 'kotlin-daemon-client.jar' repackages 'native-platform' with all its binaries.
          * Here we make sure it is placed at the end of the test classpath so that we do not accidentally
          * pick parts of 'native-platform' from the 'kotlin-daemon-client.jar' when instantiating
          * a Gradle runner.
          */
-        val reorderedClasspath = classpath.filter { file ->
+        val reorderedClasspath = crossVersionToolingApi + classpath.filter { file ->
             !file.name.startsWith("kotlin-daemon-client")
         }.plus(classpath.filter { it.name.startsWith("kotlin-daemon-client") })
         super.setClasspath(reorderedClasspath)
