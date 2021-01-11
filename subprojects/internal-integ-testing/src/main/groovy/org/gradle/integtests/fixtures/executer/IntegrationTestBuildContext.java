@@ -21,6 +21,10 @@ import org.gradle.util.GradleVersion;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.Properties;
 
 /**
  * Provides values that are set during the build, or defaulted when not running in a build context (e.g. IDE).
@@ -29,6 +33,23 @@ public class IntegrationTestBuildContext {
     // Collect this early, as the process' current directory can change during embedded test execution
     public static final TestFile TEST_DIR = new TestFile(new File(".").toURI());
     public static final IntegrationTestBuildContext INSTANCE = new IntegrationTestBuildContext();
+    private static final GradleVersion INSTALLATION_GRADLE_VERSION;
+
+    static  {
+        try {
+            String beaconJar = IntegrationTestBuildContext.class.getClassLoader().loadClass("org.gradle.internal.installation.beacon.InstallationBeacon").getProtectionDomain().getCodeSource().getLocation().toString();
+            String baseServicesJar = beaconJar.replace("installation-beacon", "base-services");
+            URLConnection connection = new URL("jar:" + baseServicesJar + "!" + GradleVersion.RESOURCE_NAME).openConnection();
+            connection.setUseCaches(false);
+            InputStream inputStream = connection.getInputStream();
+            Properties properties = new Properties();
+            properties.load(inputStream);
+            String version = properties.get(GradleVersion.VERSION_NUMBER_PROPERTY).toString();
+            INSTALLATION_GRADLE_VERSION = GradleVersion.version(version);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     @Nullable
     public TestFile getGradleHomeDir() {
@@ -86,7 +107,7 @@ public class IntegrationTestBuildContext {
     }
 
     public GradleVersion getVersion() {
-        return GradleVersion.current();
+        return INSTALLATION_GRADLE_VERSION;
     }
 
     /**
