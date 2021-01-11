@@ -143,6 +143,11 @@ If this is causing issues in cases you manually configure the module path, or us
 
 The `ValidateTaskProperties` task has been removed and replaced by the link:{javadocPath}/org/gradle/plugin/devel/tasks/ValidatePlugins.html task.
 
+==== Removal of DefaultVersionSelectorScheme constructor
+
+This internal API was used in plugins, amongst other the https://github.com/nebula-plugins[Nebula plugins], and was deprecated in the Gradle 5.x timeline and is now removed.
+Latest plugins version should no longer reference it.
+
 === Deprecations
 
 [[missing_dependencies]]
