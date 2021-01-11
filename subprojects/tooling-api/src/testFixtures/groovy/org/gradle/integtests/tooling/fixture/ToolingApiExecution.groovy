@@ -20,20 +20,18 @@ import org.gradle.api.specs.Spec
 import org.gradle.api.specs.Specs
 import org.gradle.integtests.fixtures.AbstractMultiTestRunner
 import org.gradle.integtests.fixtures.executer.GradleDistribution
-import org.gradle.internal.classloader.ClasspathUtil
+import org.gradle.integtests.fixtures.executer.IntegrationTestBuildContext
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.util.GradleVersion
 import spock.lang.Unroll
 
 class ToolingApiExecution extends AbstractMultiTestRunner.Execution implements ToolingApiClasspathProvider {
-    private static final Map<String, ClassLoader> TEST_CLASS_LOADERS = [:]
-
     final ToolingApiDistribution toolingApi
     final GradleDistribution gradle
 
-    ToolingApiExecution(ToolingApiDistribution toolingApi, GradleDistribution gradle) {
-        this.toolingApi = toolingApi
-        this.gradle = gradle
+    ToolingApiExecution(GradleDistribution tooling, GradleDistribution target) {
+        this.toolingApi = new TestClasspathToolingApiDistribution(tooling.version)
+        this.gradle = target
     }
 
     @Override
@@ -47,7 +45,7 @@ class ToolingApiExecution extends AbstractMultiTestRunner.Execution implements T
     }
 
     protected String displayName(GradleVersion version) {
-        if (version == GradleVersion.current()) {
+        if (version == IntegrationTestBuildContext.INSTANCE.version) {
             return "current"
         }
         return version.version
@@ -89,34 +87,7 @@ class ToolingApiExecution extends AbstractMultiTestRunner.Execution implements T
     }
 
     @Override
-    protected List<? extends Class<?>> loadTargetClasses() {
-        def testClassLoader = getTestClassLoader()
-        return [testClassLoader.loadClass(target.name)]
-    }
-
-    ClassLoader getTestClassLoader() {
-        def testClassPath = []
-        testClassPath << ClasspathUtil.getClasspathForClass(target)
-        testClassPath << ClasspathUtil.getClasspathForClass(TestResultHandler)
-
-        testClassPath.addAll(collectAdditionalClasspath())
-
-        getTestClassLoader(TEST_CLASS_LOADERS, toolingApi, testClassPath) {
-            it.allowResources(target.name.replace('.', '/'))
-        }
-    }
-
-    private List<File> collectAdditionalClasspath() {
-        target.annotations.findAll { it instanceof ToolingApiAdditionalClasspath }.collectMany { annotation ->
-            (annotation as ToolingApiAdditionalClasspath).value()
-                .newInstance()
-                .additionalClasspathFor(toolingApi, gradle)
-        }
-    }
-
-    @Override
     protected void before() {
-        def testClazz = testClassLoader.loadClass(ToolingApiSpecification.name)
-        testClazz.selectTargetDist(gradle)
+        ToolingApiSpecification.selectTargetDist(gradle)
     }
 }

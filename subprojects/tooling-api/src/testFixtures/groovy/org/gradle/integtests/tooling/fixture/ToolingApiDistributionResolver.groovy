@@ -24,6 +24,7 @@ import org.gradle.integtests.fixtures.RepoScriptBlockUtil
 import org.gradle.integtests.fixtures.executer.IntegrationTestBuildContext
 import org.gradle.integtests.fixtures.executer.LocallyBuiltGradleDistribution
 import org.gradle.testfixtures.ProjectBuilder
+import org.gradle.util.GradleVersion
 
 class ToolingApiDistributionResolver {
     private final DependencyResolutionServices resolutionServices
@@ -50,14 +51,12 @@ class ToolingApiDistributionResolver {
 
     ToolingApiDistribution resolve(String toolingApiVersion) {
         if (!distributions[toolingApiVersion]) {
-            if (useToolingApiFromTestClasspath(toolingApiVersion)) {
-                distributions[toolingApiVersion] = new TestClasspathToolingApiDistribution()
-            } else if (LocallyBuiltGradleDistribution.isLocallyBuiltVersion(toolingApiVersion)) {
+            if (LocallyBuiltGradleDistribution.isLocallyBuiltVersion(toolingApiVersion)) {
                 File toolingApiJar = LocallyBuiltGradleDistribution.getToolingApiJar(toolingApiVersion)
                 List<File> slf4j = resolveDependency("org.slf4j:slf4j-api:1.7.25").toList()
                 distributions[toolingApiVersion] = new ExternalToolingApiDistribution(toolingApiVersion, slf4j + toolingApiJar)
             } else {
-                distributions[toolingApiVersion] = new ExternalToolingApiDistribution(toolingApiVersion, resolveDependency("org.gradle:gradle-tooling-api:$toolingApiVersion"))
+                distributions[toolingApiVersion] = new TestClasspathToolingApiDistribution(GradleVersion.version(toolingApiVersion))
             }
         }
         distributions[toolingApiVersion]
@@ -68,11 +67,6 @@ class ToolingApiDistributionResolver {
         Configuration config = resolutionServices.configurationContainer.detachedConfiguration(dep)
         config.resolutionStrategy.disableDependencyVerification()
         return config.files
-    }
-
-    private boolean useToolingApiFromTestClasspath(String toolingApiVersion) {
-        !useExternalToolingApiDistribution &&
-            toolingApiVersion == buildContext.version.baseVersion.version
     }
 
     private DependencyResolutionServices createResolutionServices() {

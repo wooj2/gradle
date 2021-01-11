@@ -27,15 +27,6 @@ import org.gradle.util.GradleVersion
 class ToolingApiCompatibilitySuiteRunner extends AbstractCompatibilityTestRunner {
     private static final GradleVersion MINIMAL_VERSION = GradleVersion.version("2.6")
 
-    private static ToolingApiDistributionResolver resolver
-
-    private static ToolingApiDistributionResolver getResolver() {
-        if (resolver == null) {
-            resolver = new ToolingApiDistributionResolver().withDefaultRepository()
-        }
-        return resolver
-    }
-
     ToolingApiCompatibilitySuiteRunner(Class<? extends ToolingApiSpecification> target) {
         super(target)
     }
@@ -48,32 +39,29 @@ class ToolingApiCompatibilitySuiteRunner extends AbstractCompatibilityTestRunner
         return previousVersions.all
     }
 
-    @Override
-    protected void createExecutionsForContext(CoverageContext coverageContext) {
-        // current vs. current
-        add(new ToolingApiExecution(getResolver().resolve(current.version.baseVersion.version), current))
-        super.createExecutionsForContext(coverageContext)
+    protected void createExecutions() {
+        String version = System.getProperty(VERSIONS_SYSPROP_NAME)
+        if (version == "default") {
+            // For Tooling API tests, the default is to test the current Tooling API against the current Gradle version
+            add(createToolingApiExecution(current))
+        } else {
+            add(createToolingApiExecution(getVersion(version).distribution))
+        }
     }
 
-    @Override
-    protected Collection<ToolingApiExecution> createDistributionExecutionsFor(GradleDistributionTool versionedTool) {
-        def executions = []
-
-        def distribution = versionedTool.distribution
-        if (distribution.toolingApiSupported) {
-            // current vs. target
-            def currentVersion = current.version
-            if (currentVersion >= MINIMAL_VERSION) {
-                executions.add(new ToolingApiExecution(getResolver().resolve(currentVersion.baseVersion.version), distribution))
+    protected ToolingApiExecution createToolingApiExecution(GradleDistribution gradleDistribution) {
+        if (current.version >= MINIMAL_VERSION) {
+            def testRunnerHasCurrentToolingApi = current.version.baseVersion == GradleVersion.current().baseVersion
+            if (testRunnerHasCurrentToolingApi) {
+                // Running 'current' towards version defined in 'org.gradle.integtest.versions'
+                new ToolingApiExecution(current, gradleDistribution)
+            } else {
+                // Running version defined in 'org.gradle.integtest.versions' towards 'current'
+                new ToolingApiExecution(gradleDistribution, current)
             }
-            // target vs. current
-            def distribVersion = distribution.version
-            if (distribVersion >= MINIMAL_VERSION) {
-                executions.add(new ToolingApiExecution(getResolver().resolve(distribVersion.version), current))
-            }
+        } else {
+            throw new IllegalArgumentException()
         }
-
-        return executions
     }
 
     @Override

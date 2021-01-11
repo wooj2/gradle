@@ -23,5 +23,4 @@ import javax.annotation.Nullable
 interface ToolingApiDistribution {
     GradleVersion getVersion()
     @Nullable Collection<File> getClasspath()
-    ClassLoader getClassLoader()
 }

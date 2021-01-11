@@ -19,15 +19,17 @@ package org.gradle.integtests.tooling.fixture
 import org.gradle.util.GradleVersion
 
 class TestClasspathToolingApiDistribution implements ToolingApiDistribution {
+    GradleVersion version
+
+    TestClasspathToolingApiDistribution(GradleVersion version) {
+        this.version = version
+    }
+
     GradleVersion getVersion() {
-        GradleVersion.current()
+        version
     }
 
     Collection<File> getClasspath() {
         null
-    }
-
-    ClassLoader getClassLoader() {
-        return getClass().classLoader
     }
 }

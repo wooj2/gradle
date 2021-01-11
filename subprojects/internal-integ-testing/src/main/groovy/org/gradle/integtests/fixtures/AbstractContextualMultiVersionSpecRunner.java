@@ -184,7 +184,7 @@ public abstract class AbstractContextualMultiVersionSpecRunner<T extends Abstrac
         }
     }
 
-    protected enum CoverageContext {
+    public enum CoverageContext {
         DEFAULT("default"), LATEST("latest"), PARTIAL("partial"), FULL("all"), UNKNOWN(null);
 
         final String selector;
@@ -193,7 +193,7 @@ public abstract class AbstractContextualMultiVersionSpecRunner<T extends Abstrac
             this.selector = selector;
         }
 
-        static CoverageContext from(String requested) {
+        public static CoverageContext from(String requested) {
             for (CoverageContext context : values()) {
                 if (context != UNKNOWN && context.selector.equals(requested)) {
                     return context;

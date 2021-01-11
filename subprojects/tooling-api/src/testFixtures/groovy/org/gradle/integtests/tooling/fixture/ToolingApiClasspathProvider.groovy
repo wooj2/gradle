@@ -20,7 +20,6 @@ import org.apache.commons.io.output.TeeOutputStream
 import org.gradle.api.Action
 import org.gradle.internal.classloader.DefaultClassLoaderFactory
 import org.gradle.internal.classloader.FilteringClassLoader
-import org.gradle.internal.classloader.MultiParentClassLoader
 import org.gradle.internal.classloader.VisitableURLClassLoader
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.util.RedirectStdOutAndErr
@@ -75,8 +74,6 @@ trait ToolingApiClasspathProvider {
         classpathConfigurer.execute(sharedSpec)
         def sharedClassLoader = classLoaderFactory.createFilteringClassLoader(getClass().classLoader, sharedSpec)
 
-        def parentClassLoader = new MultiParentClassLoader(toolingApi.classLoader, sharedClassLoader)
-
-        return new VisitableURLClassLoader("test", parentClassLoader, testClassPath.collect { it.toURI().toURL() })
+        return new VisitableURLClassLoader("test", sharedClassLoader, testClassPath.collect { it.toURI().toURL() })
     }
 }
