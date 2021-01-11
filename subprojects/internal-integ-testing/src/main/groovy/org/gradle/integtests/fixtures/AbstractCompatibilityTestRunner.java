@@ -77,6 +77,13 @@ public abstract class AbstractCompatibilityTestRunner extends AbstractContextual
     }
 
     @Override
+    protected GradleDistributionTool getVersion(String version) {
+        List<GradleDistribution> allSupportedVersions = choosePreviousVersionsToTest(releasedVersions);
+        return versionedToolFrom(allSupportedVersions.stream().filter(d -> d.getVersion().getVersion().equals(version))
+            .findFirst().orElseThrow(IllegalArgumentException::new));
+    }
+
+    @Override
     protected boolean isAvailable(GradleDistributionTool version) {
         return true;
     }

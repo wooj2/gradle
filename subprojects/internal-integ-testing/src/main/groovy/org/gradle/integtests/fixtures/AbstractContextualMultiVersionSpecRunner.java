@@ -50,6 +50,15 @@ public abstract class AbstractContextualMultiVersionSpecRunner<T extends Abstrac
 
     protected abstract Collection<T> getAllVersions();
 
+    protected T getVersion(String version) {
+        for (T next : getAllVersions()) {
+            if (next.matches(version)) {
+                return next;
+            }
+        }
+        throw new IllegalArgumentException();
+    }
+
     protected Collection<T> getQuickVersions() {
         for (T next : getAllVersions()) {
             if (isAvailable(next)) {
@@ -150,16 +159,19 @@ public abstract class AbstractContextualMultiVersionSpecRunner<T extends Abstrac
     }
 
     private void createSelectedExecutions(List<String> selectionCriteria) {
-        Collection<T> possibleVersions = getAllVersions();
         Set<T> versionsUnderTest = Sets.newHashSet();
-
-        for (String criteria : selectionCriteria) {
-            if ("latest".equals(criteria)) {
-                versionsUnderTest.add(getLast(possibleVersions.iterator()));
-            } else {
-                for (T version : possibleVersions) {
-                    if (isAvailable(version) && version.matches(criteria)) {
-                        versionsUnderTest.add(version);
+        if (selectionCriteria.size() == 1 && !"latest".equals(selectionCriteria.get(0))) {
+            versionsUnderTest.add(getVersion(selectionCriteria.get(0)));
+        } else {
+            Collection<T> possibleVersions = getAllVersions();
+            for (String criteria : selectionCriteria) {
+                if ("latest".equals(criteria)) {
+                    versionsUnderTest.add(getLast(possibleVersions.iterator()));
+                } else {
+                    for (T version : possibleVersions) {
+                        if (isAvailable(version) && version.matches(criteria)) {
+                            versionsUnderTest.add(version);
+                        }
                     }
                 }
             }
