@@ -31,7 +31,7 @@ class SupportedBuildJvmIntegrationTest extends AbstractIntegrationSpec {
     @IgnoreIf({ GradleContextualExecuter.embedded }) // This test requires to start Gradle from scratch with the wrong Java version
     def "provides reasonable failure message when attempting to run under java #jdk.javaVersion"() {
         given:
-        executer.withJavaHome(jdk.javaHome)
+        executer.withJDK(jdk)
 
         expect:
         fails("help")

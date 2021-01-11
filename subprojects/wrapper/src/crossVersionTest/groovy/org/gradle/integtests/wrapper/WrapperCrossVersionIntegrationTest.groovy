@@ -61,7 +61,7 @@ class WrapperCrossVersionIntegrationTest extends CrossVersionIntegrationSpec {
     @Requires(adhoc = { AvailableJavaHomes.getJdks("1.6", "1.7") })
     def 'provides reasonable failure message when attempting to run current Version with previous wrapper under java #jdk.javaVersion'() {
         when:
-        GradleExecuter executor = prepareWrapperExecuter(previous, current).withJavaHome(jdk.javaHome)
+        GradleExecuter executor = prepareWrapperExecuter(previous, current).withJDK(jdk)
 
         then:
         def result = executor.usingExecutable('gradlew').withArgument('help').runWithFailure()

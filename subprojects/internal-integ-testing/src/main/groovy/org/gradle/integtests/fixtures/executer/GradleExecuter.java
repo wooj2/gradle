@@ -22,6 +22,7 @@ import org.gradle.api.logging.configuration.ConsoleOutput;
 import org.gradle.api.logging.configuration.WarningMode;
 import org.gradle.integtests.fixtures.RichConsoleStyling;
 import org.gradle.internal.concurrent.Stoppable;
+import org.gradle.internal.jvm.Jvm;
 import org.gradle.test.fixtures.file.TestDirectoryProvider;
 import org.gradle.test.fixtures.file.TestFile;
 import org.gradle.util.TextUtil;
@@ -108,6 +109,11 @@ public interface GradleExecuter extends Stoppable {
      * Sets the java home dir. Setting to null requests that the executer use the real default java home dir rather than the default used for testing.
      */
     GradleExecuter withJavaHome(File userHomeDir);
+
+    /**
+     * Sets information about the complete JDK (including the home dir).
+     */
+    GradleExecuter withJDK(Jvm jdk);
 
     /**
      * Sets the executable to use. Set to null to use the real default executable (if any) rather than the default used for testing.

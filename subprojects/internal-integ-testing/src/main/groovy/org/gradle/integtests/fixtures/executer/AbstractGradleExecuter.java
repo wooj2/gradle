@@ -26,6 +26,7 @@ import com.google.common.io.CharSource;
 import groovy.lang.Closure;
 import groovy.lang.DelegatesTo;
 import org.gradle.api.Action;
+import org.gradle.api.JavaVersion;
 import org.gradle.api.UncheckedIOException;
 import org.gradle.api.internal.artifacts.ivyservice.ArtifactCachesProvider;
 import org.gradle.api.internal.initialization.DefaultClassLoaderScope;
@@ -143,6 +144,7 @@ public abstract class AbstractGradleExecuter implements GradleExecuter, Resettab
     private TestFile gradleUserHomeDir;
     private File userHomeDir;
     private File javaHome;
+    private Jvm jdk;
     private File buildScript;
     private File projectDir;
     private File settingsFile;
@@ -233,6 +235,7 @@ public abstract class AbstractGradleExecuter implements GradleExecuter, Resettab
         dependencyList = false;
         executable = null;
         javaHome = null;
+        jdk = null;
         environmentVars.clear();
         stdinPipe = null;
         defaultCharacterEncoding = null;
@@ -323,6 +326,9 @@ public abstract class AbstractGradleExecuter implements GradleExecuter, Resettab
         }
         if (javaHome != null) {
             executer.withJavaHome(javaHome);
+        }
+        if (jdk != null) {
+            executer.withJDK(jdk);
         }
         for (File initScript : initScripts) {
             executer.usingInitScript(initScript);
@@ -559,7 +565,12 @@ public abstract class AbstractGradleExecuter implements GradleExecuter, Resettab
             buildJvmOpts.add("-Xms256m");
             buildJvmOpts.add("-Xmx512m");
         }
-        buildJvmOpts.add("-XX:MaxMetaspaceSize=512m");
+        if (jdk != null && jdk.getJavaVersion().compareTo(JavaVersion.VERSION_1_8) < 0) {
+            // Although Gradle isn't supported on earlier versions, some tests do run it using Java 6 and 7 to verify it behaves well in this case
+            buildJvmOpts.add("-XX:MaxPermSize=320m");
+        } else {
+            buildJvmOpts.add("-XX:MaxMetaspaceSize=512m");
+        }
         buildJvmOpts.add("-XX:+HeapDumpOnOutOfMemoryError");
         buildJvmOpts.add("-XX:HeapDumpPath=" + buildContext.getGradleUserHomeDir());
         return buildJvmOpts;
@@ -587,6 +598,13 @@ public abstract class AbstractGradleExecuter implements GradleExecuter, Resettab
     @Override
     public GradleExecuter withJavaHome(File javaHome) {
         this.javaHome = javaHome;
+        return this;
+    }
+
+    @Override
+    public GradleExecuter withJDK(Jvm jdk) {
+        this.jdk = jdk;
+        this.javaHome = jdk.getJavaHome();
         return this;
     }
 
