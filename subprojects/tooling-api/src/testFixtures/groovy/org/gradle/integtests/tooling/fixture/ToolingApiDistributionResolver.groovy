@@ -55,6 +55,8 @@ class ToolingApiDistributionResolver {
                 File toolingApiJar = LocallyBuiltGradleDistribution.getToolingApiJar(toolingApiVersion)
                 List<File> slf4j = resolveDependency("org.slf4j:slf4j-api:1.7.25").toList()
                 distributions[toolingApiVersion] = new ExternalToolingApiDistribution(toolingApiVersion, slf4j + toolingApiJar)
+            } else if (useExternalToolingApiDistribution) {
+                distributions[toolingApiVersion] = new ExternalToolingApiDistribution(toolingApiVersion, resolveDependency("org.gradle:gradle-tooling-api:$toolingApiVersion"))
             } else {
                 distributions[toolingApiVersion] = new TestClasspathToolingApiDistribution(GradleVersion.version(toolingApiVersion))
             }
