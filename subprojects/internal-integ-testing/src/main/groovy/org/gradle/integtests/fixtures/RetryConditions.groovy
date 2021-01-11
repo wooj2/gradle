@@ -65,8 +65,10 @@ class RetryConditions {
     }
 
     static boolean onIssueWithReleasedGradleVersion(Object specification, Throwable failure) {
-        def daemonsFixture = specification.hasProperty("daemonsFixture") ? specification.daemonsFixture : null
-        return shouldRetry(specification, failure, daemonsFixture)
+        // FIXME Daemon fixture needs to work without Gradle service
+        // def daemonsFixture = specification.hasProperty("daemonsFixture") ? specification.daemonsFixture : null
+        // return shouldRetry(specification, failure, daemonsFixture)
+        return false
     }
 
     private static boolean shouldRetry(Object specification, Throwable failure, @Nullable DaemonLogsAnalyzer daemonsFixture) {
