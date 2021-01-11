@@ -26,7 +26,6 @@ import com.google.common.io.CharSource;
 import groovy.lang.Closure;
 import groovy.lang.DelegatesTo;
 import org.gradle.api.Action;
-import org.gradle.api.JavaVersion;
 import org.gradle.api.UncheckedIOException;
 import org.gradle.api.internal.artifacts.ivyservice.ArtifactCachesProvider;
 import org.gradle.api.internal.initialization.DefaultClassLoaderScope;
@@ -41,7 +40,6 @@ import org.gradle.internal.MutableActionSet;
 import org.gradle.internal.UncheckedException;
 import org.gradle.internal.featurelifecycle.LoggingDeprecatedFeatureHandler;
 import org.gradle.internal.jvm.Jvm;
-import org.gradle.internal.jvm.inspection.JvmVersionDetector;
 import org.gradle.internal.logging.LoggingManagerInternal;
 import org.gradle.internal.logging.services.DefaultLoggingManagerFactory;
 import org.gradle.internal.logging.services.LoggingServiceRegistry;
@@ -103,8 +101,6 @@ public abstract class AbstractGradleExecuter implements GradleExecuter, Resettab
         .parent(NativeServicesTestFixture.getInstance())
         .provider(new GlobalScopeServices(true))
         .build();
-
-    private static final JvmVersionDetector JVM_VERSION_DETECTOR = GLOBAL_SERVICES.get(JvmVersionDetector.class);
 
     protected final static Set<String> PROPAGATED_SYSTEM_PROPERTIES = Sets.newHashSet();
 
@@ -563,12 +559,7 @@ public abstract class AbstractGradleExecuter implements GradleExecuter, Resettab
             buildJvmOpts.add("-Xms256m");
             buildJvmOpts.add("-Xmx512m");
         }
-        if (JVM_VERSION_DETECTOR.getJavaVersion(Jvm.forHome(getJavaHome())).compareTo(JavaVersion.VERSION_1_8) < 0) {
-            // Although Gradle isn't supported on earlier versions, some tests do run it using Java 6 and 7 to verify it behaves well in this case
-            buildJvmOpts.add("-XX:MaxPermSize=320m");
-        } else {
-            buildJvmOpts.add("-XX:MaxMetaspaceSize=512m");
-        }
+        buildJvmOpts.add("-XX:MaxMetaspaceSize=512m");
         buildJvmOpts.add("-XX:+HeapDumpOnOutOfMemoryError");
         buildJvmOpts.add("-XX:HeapDumpPath=" + buildContext.getGradleUserHomeDir());
         return buildJvmOpts;
