@@ -196,6 +196,8 @@ fun configureTests() {
     fun Test.isUnitTest() = listOf("test", "writePerformanceScenarioDefinitions", "writeTmpPerformanceScenarioDefinitions").contains(name)
 
     tasks.withType<Test>().configureEach {
+        useJUnitPlatform()
+
         filterEnvironmentVariables()
 
         maxParallelForks = project.maxParallelForks
@@ -217,7 +219,6 @@ fun configureTests() {
 
         if (project.testDistributionEnabled() && !isUnitTest()) {
             println("Test distribution has been enabled for $testName")
-            useJUnitPlatform()
             distribution {
                 enabled.set(true)
                 if (BuildEnvironment.isCiServer) {
