@@ -39,6 +39,7 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 
 import javax.annotation.Nonnull;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +53,8 @@ import static org.junit.platform.launcher.TagFilter.excludeTags;
 import static org.junit.platform.launcher.TagFilter.includeTags;
 
 public class JUnitPlatformTestClassProcessor extends AbstractJUnitTestClassProcessor<JUnitPlatformSpec> {
+    private static final String TEST_CLASS_CLASSLOADER_PROVIDER = "org.gradle.api.internal.tasks.testing.junitplatform.testClassClassLoaderProvider";
+
     private CollectAllTestClassesExecutor testClassExecutor;
 
     public JUnitPlatformTestClassProcessor(JUnitPlatformSpec spec, IdGenerator<?> idGenerator, ActorFactory actorFactory, Clock clock) {
@@ -106,9 +109,16 @@ public class JUnitPlatformTestClassProcessor extends AbstractJUnitTestClassProce
 
     private Class<?> loadClass(String className) {
         try {
-            ClassLoader applicationClassloader = Thread.currentThread().getContextClassLoader();
-            return Class.forName(className, false, applicationClassloader);
-        } catch (ClassNotFoundException e) {
+            String testClassProviderOverride = System.getProperty(TEST_CLASS_CLASSLOADER_PROVIDER);
+            ClassLoader classloader;
+            if (testClassProviderOverride == null) {
+                classloader = Thread.currentThread().getContextClassLoader();
+            } else {
+                Method loadMethod = getClass().getClassLoader().loadClass(testClassProviderOverride).getMethod("loadClass", String.class);
+                classloader = (ClassLoader) loadMethod.invoke(null, className);
+            }
+            return Class.forName(className, false, classloader);
+        } catch (Exception e) {
             throw UncheckedException.throwAsUncheckedException(e);
         }
     }
