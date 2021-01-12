@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.gradle.integtests.tooling.fixture;
+package org.gradle.integtests.fixtures;
 
 import org.gradle.api.specs.Spec;
 import org.gradle.api.specs.Specs;

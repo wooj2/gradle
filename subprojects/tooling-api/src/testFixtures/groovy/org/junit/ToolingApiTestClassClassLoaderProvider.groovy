@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 
-package org.gradle.integtests.tooling.fixture
+package org.junit
 
 import org.apache.commons.io.output.TeeOutputStream
-import org.gradle.api.Action
+import org.gradle.integtests.tooling.fixture.ClassLoaderFixture
+import org.gradle.integtests.tooling.fixture.ToolingApiDistributionResolver
+import org.gradle.integtests.tooling.fixture.ToolingApiSpecification
+import org.gradle.integtests.tooling.fixture.TargetGradleVersion
+import org.gradle.integtests.tooling.fixture.ToolingApiVersion
+import org.gradle.internal.classloader.ClasspathUtil
 import org.gradle.internal.classloader.DefaultClassLoaderFactory
 import org.gradle.internal.classloader.FilteringClassLoader
 import org.gradle.internal.classloader.MultiParentClassLoader
@@ -28,23 +33,23 @@ import org.gradle.util.Requires
 import org.gradle.util.SetSystemProperties
 import org.gradle.util.TestPrecondition
 
-trait ToolingApiClasspathProvider {
-    ClassLoader getTestClassLoader(
-        Map<String, ClassLoader> cache,
-        ToolingApiDistribution toolingApi,
-        List<File> testClasspath,
-        Action<? super FilteringClassLoader.Spec> classpathConfigurer) {
-        synchronized(ToolingApiClasspathProvider) {
-            def classLoader = cache.get(toolingApi.version.version)
-            if (!classLoader) {
-                classLoader = createTestClassLoader(toolingApi, classpathConfigurer, testClasspath)
-                cache.put(toolingApi.version.version, classLoader)
-            }
-            return classLoader
-        }
+class ToolingApiTestClassClassLoaderProvider {
+
+    static ClassLoader loadClass(String className) {
+        String toolingApiToLoad = System.getProperty("org.gradle.integtest.tooling-api-to-load")
+        return createTestClassLoader(className, toolingApiToLoad)
     }
 
-    private ClassLoader createTestClassLoader(ToolingApiDistribution toolingApi, Action<? super FilteringClassLoader.Spec> classpathConfigurer, List<File> testClassPath) {
+    private static ClassLoader createTestClassLoader(String target, String toolingApiToLoad) {
+        ClassLoader applicationClassloader = Thread.currentThread().getContextClassLoader()
+
+        def toolingApi = new ToolingApiDistributionResolver().withDefaultRepository().resolve(toolingApiToLoad)
+
+        List<File> testClassPath = []
+        testClassPath << ClasspathUtil.getClasspathForClass(target)
+        testClassPath << ClasspathUtil.getClasspathForClass(ToolingApiSpecification)
+        //TODO testClassPath.addAll(collectAdditionalClasspath()) ???
+
         def classLoaderFactory = new DefaultClassLoaderFactory()
 
         def sharedSpec = new FilteringClassLoader.Spec()
@@ -72,8 +77,10 @@ trait ToolingApiClasspathProvider {
         sharedSpec.allowClass(ToolingApiVersion)
         sharedSpec.allowClass(TeeOutputStream)
         sharedSpec.allowClass(ClassLoaderFixture)
-        classpathConfigurer.execute(sharedSpec)
-        def sharedClassLoader = classLoaderFactory.createFilteringClassLoader(getClass().classLoader, sharedSpec)
+
+        sharedSpec.allowResources(target.replace('.', '/'))
+
+        def sharedClassLoader = classLoaderFactory.createFilteringClassLoader(applicationClassloader, sharedSpec)
 
         def parentClassLoader = new MultiParentClassLoader(toolingApi.classLoader, sharedClassLoader)
 

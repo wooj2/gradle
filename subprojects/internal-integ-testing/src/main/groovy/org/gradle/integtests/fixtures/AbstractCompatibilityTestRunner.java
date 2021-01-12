@@ -102,7 +102,9 @@ public abstract class AbstractCompatibilityTestRunner extends AbstractContextual
 
     protected abstract List<GradleDistribution> choosePreviousVersionsToTest(ReleasedVersionDistributions previousVersions);
 
-    protected abstract Collection<Execution> createDistributionExecutionsFor(GradleDistributionTool versionedTool);
+    protected Collection<Execution> createDistributionExecutionsFor(GradleDistributionTool versionedTool) {
+        return Collections.emptyList();
+    }
 
     /**
      * Makes sure the test adheres to the naming convention.

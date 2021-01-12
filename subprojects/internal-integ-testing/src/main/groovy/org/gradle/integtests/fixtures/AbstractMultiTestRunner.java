@@ -312,6 +312,9 @@ public abstract class AbstractMultiTestRunner extends Runner implements Filterab
         protected void before() {
         }
 
+        protected void before(Class<?> testClass) {
+        }
+
         protected void after() {
         }
 
@@ -400,6 +403,7 @@ public abstract class AbstractMultiTestRunner extends Runner implements Filterab
                         assertCanExecute();
                         started = true;
                         before();
+                        before(description.getTestClass());
                     } catch (Throwable t) {
                         notifier.fireTestFailure(new Failure(translated, t));
                     }

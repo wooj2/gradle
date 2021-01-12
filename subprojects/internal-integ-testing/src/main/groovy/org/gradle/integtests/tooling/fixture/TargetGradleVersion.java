@@ -15,17 +15,21 @@
  */
 package org.gradle.integtests.tooling.fixture;
 
-import java.lang.annotation.*;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Specifies the range of tooling API versions that the given tooling API test can work with.
+ * Specifies the range of target Gradle versions that the given tooling API test can work with.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Inherited
-public @interface ToolingApiVersion {
+public @interface TargetGradleVersion {
     /**
-     * The requested tooling API version. Can use '>=nnn', '<=nnn', '&lt;nnn', '&gt;nnn', '=nnn', '!nnn', 'current' or '!current' or space-separated list of patterns.
+     * The requested target Gradle version. Can use '>=nnn', '<=nnn', '&lt;nnn', '&gt;nnn', '=nnn', 'current' or '!current' or space-separated list of patterns.
      */
     String value();
 }

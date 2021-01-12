@@ -53,19 +53,22 @@ fun createAggregateTasks(sourceSet: SourceSet) {
         description = "Runs the cross-version tests against a subset of selected Gradle versions with 'forking' executer for quick feedback"
     }
 
-    val releasedVersions = moduleIdentity.releasedVersions.forUseAtConfigurationTime().getOrNull()
+    val releasedVersions = moduleIdentity.releasedVersions.forUseAtConfigurationTime().orNull
     releasedVersions?.allTestedVersions?.forEach { targetVersion ->
-        val crossVersionTest = createTestTask(
-            "gradle${targetVersion.version}CrossVersionTest", "forking", sourceSet, TestType.CROSSVERSION,
-            Action {
-                this.description = "Runs the cross-version tests against Gradle ${targetVersion.version}"
-                this.systemProperties["org.gradle.integtest.versions"] = targetVersion.version
-            }
-        )
+        val crossVersionTestToCurrent = createTestTask("gradle${targetVersion.version}ToCurrentCrossVersionTest", "forking", sourceSet, TestType.CROSSVERSION) {
+            this.description = "Runs the cross-version tests from ${targetVersion.version} towards current Gradle"
+            this.systemProperties["org.gradle.integtest.versions"] = targetVersion.version
+            this.systemProperties["org.gradle.integtest.tooling-api-to-load"] = targetVersion.version
+            this.systemProperties["org.gradle.api.internal.tasks.testing.junitplatform.testClassClassLoaderProvider"] = "org.junit.ToolingApiTestClassClassLoaderProvider"
+        }
+        val crossVersionTestToTarget = createTestTask("gradleCurrentTo${targetVersion.version}CrossVersionTest", "forking", sourceSet, TestType.CROSSVERSION) {
+            this.description = "Runs the cross-version tests from current Gradle towards ${targetVersion.version}"
+            this.systemProperties["org.gradle.integtest.versions"] = targetVersion.version
+        }
 
-        allVersionsCrossVersionTests.configure { dependsOn(crossVersionTest) }
+        allVersionsCrossVersionTests.configure { dependsOn(crossVersionTestToCurrent, crossVersionTestToTarget) }
         if (targetVersion in releasedVersions.mainTestedVersions) {
-            quickFeedbackCrossVersionTests.configure { dependsOn(crossVersionTest) }
+            quickFeedbackCrossVersionTests.configure { dependsOn(crossVersionTestToCurrent, crossVersionTestToTarget) }
         }
     }
 }
