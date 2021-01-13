@@ -39,6 +39,7 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 
 import javax.annotation.Nonnull;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +53,8 @@ import static org.junit.platform.launcher.TagFilter.excludeTags;
 import static org.junit.platform.launcher.TagFilter.includeTags;
 
 public class JUnitPlatformTestClassProcessor extends AbstractJUnitTestClassProcessor<JUnitPlatformSpec> {
+    private static final String TEST_CLASS_CLASSLOADER = "org.gradle.api.internal.tasks.testing.junitplatform.testClassClassLoader";
+
     private CollectAllTestClassesExecutor testClassExecutor;
 
     public JUnitPlatformTestClassProcessor(JUnitPlatformSpec spec, IdGenerator<?> idGenerator, ActorFactory actorFactory, Clock clock) {
@@ -106,9 +109,22 @@ public class JUnitPlatformTestClassProcessor extends AbstractJUnitTestClassProce
 
     private Class<?> loadClass(String className) {
         try {
-            ClassLoader applicationClassloader = Thread.currentThread().getContextClassLoader();
-            return Class.forName(className, false, applicationClassloader);
+            return Class.forName(className, false, testClassClassLoader());
         } catch (ClassNotFoundException e) {
+            throw UncheckedException.throwAsUncheckedException(e);
+        }
+    }
+
+    private ClassLoader testClassClassLoader() {
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        String testClassClassLoaderOverride = System.getProperty(TEST_CLASS_CLASSLOADER);
+        if (testClassClassLoaderOverride == null) {
+            return classLoader;
+        }
+        try {
+            return (ClassLoader) classLoader.loadClass(testClassClassLoaderOverride)
+                .getDeclaredConstructor(ClassLoader.class).newInstance(classLoader);
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | ClassNotFoundException e) {
             throw UncheckedException.throwAsUncheckedException(e);
         }
     }
