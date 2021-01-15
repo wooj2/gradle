@@ -202,7 +202,7 @@ public class DefaultTaskInputs implements TaskInputsInternal {
         TaskPropertyUtils.visitProperties(propertyWalker, task, new PropertyVisitor.Adapter() {
             @Override
             public void visitInputProperty(String propertyName, PropertyValue value, boolean optional) {
-                context.add(value.getTaskDependencies());
+                context.add(value);
             }
 
             @Override

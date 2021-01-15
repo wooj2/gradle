@@ -18,7 +18,7 @@ package org.gradle.api.internal.tasks.properties.bean;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.codehaus.groovy.runtime.ConvertedClosure;
-import org.gradle.api.internal.tasks.TaskDependencyContainer;
+import org.gradle.api.internal.tasks.TaskDependencyResolveContext;
 import org.gradle.api.internal.tasks.properties.PropertyValue;
 import org.gradle.api.internal.tasks.properties.PropertyVisitor;
 import org.gradle.api.internal.tasks.properties.TypeMetadata;
@@ -91,14 +91,12 @@ class NestedRuntimeBeanNode extends AbstractNestedRuntimeBeanNode {
         }
 
         @Override
-        public TaskDependencyContainer getTaskDependencies() {
+        public void maybeFinalizeValue() {
             // Ignore
-            return TaskDependencyContainer.EMPTY;
         }
 
         @Override
-        public void maybeFinalizeValue() {
-            // Ignore
+        public void visitDependencies(TaskDependencyResolveContext context) {
         }
     }
 }

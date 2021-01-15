@@ -42,14 +42,13 @@ public class StaticValue implements PropertyValue {
     }
 
     @Override
-    public TaskDependencyContainer getTaskDependencies() {
+    public void visitDependencies(TaskDependencyResolveContext context) {
         if (value instanceof TaskDependencyContainer) {
-            return (TaskDependencyContainer) value;
+            ((TaskDependencyContainer) value).visitDependencies(context);
+        } else if (value instanceof Buildable) {
+            context.add(value);
         }
-        if (value instanceof Buildable) {
-            return context -> context.add(value);
-        }
-        return TaskDependencyContainer.EMPTY;
+
     }
 
     public void attachProducer(Task producer) {

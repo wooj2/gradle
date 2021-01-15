@@ -547,7 +547,7 @@ public class DefaultTransformer extends AbstractTransformer<TransformAction<?>> 
                         PropertyValue value,
                         InputFilePropertyType filePropertyType
                     ) {
-                        context.add(value.getTaskDependencies());
+                        context.add(value);
                     }
                 });
             }

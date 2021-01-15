@@ -22,8 +22,9 @@ import org.gradle.api.internal.provider.ProviderInternal
 import org.gradle.internal.state.ModelObject
 import spock.lang.Specification
 
-
 class StaticValueTest extends Specification {
+    def context = Mock(TaskDependencyResolveContext)
+
     def "creates value for Provider with value"() {
         def provider = Mock(ProviderInternal)
         _ * provider.present >> true
@@ -31,9 +32,13 @@ class StaticValueTest extends Specification {
         expect:
         def value = StaticValue.of(provider)
         value.call() == provider
-        value.taskDependencies == provider
         value.attachProducer(Stub(Task))
         value.maybeFinalizeValue()
+
+        when:
+        value.visitDependencies(context)
+        then:
+        1 * provider.visitDependencies(context)
     }
 
     def "creates value for Property instance"() {
@@ -43,8 +48,12 @@ class StaticValueTest extends Specification {
 
         given:
         def value = StaticValue.of(property)
+        expect:
         value.call() == property
-        value.taskDependencies == property
+        when:
+        value.visitDependencies(context)
+        then:
+        1 * property.visitDependencies(context)
 
         when:
         value.attachProducer(task)
@@ -63,19 +72,26 @@ class StaticValueTest extends Specification {
         expect:
         def value = StaticValue.of(null)
         value.call() == null
-        value.taskDependencies == TaskDependencyContainer.EMPTY
         value.attachProducer(Stub(Task))
         value.maybeFinalizeValue()
+
+        when:
+        value.visitDependencies(context)
+        then:
+        0 * context._
     }
 
     def "creates value for other value"() {
         expect:
         def value = StaticValue.of("abc")
         value.call() == "abc"
-        value.taskDependencies == TaskDependencyContainer.EMPTY
         value.attachProducer(Stub(Task))
         value.maybeFinalizeValue()
 
+        when:
+        value.visitDependencies(context)
+        then:
+        0 * context._
     }
 
     interface GeneratedTask extends Task, ModelObject {}
