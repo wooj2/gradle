@@ -65,7 +65,6 @@ public class LayoutToPropertiesConverter {
         layout.applyTo(layoutParameters);
         Map<String, String> properties = new HashMap<>();
         configureFromHomeDir(layoutParameters.getGradleInstallationHomeDir(), properties);
-        configureFromBuildDir(layoutParameters.getSearchDir(), layoutParameters.getSearchUpwards(), properties);
         configureFromHomeDir(layout.getGradleUserHomeDir(), properties);
         configureFromSystemPropertiesOfThisJvm(Cast.uncheckedNonnullCast(properties));
         properties.putAll(initialProperties.getRequestedSystemProperties());

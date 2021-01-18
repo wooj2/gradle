@@ -187,7 +187,7 @@ class JUnitIntegrationTest extends JUnitMultiVersionIntegrationSpec {
         '''
 
         when:
-        executer.withTasks('a:test').run()
+        executer.withTasks('a:test').withArgument("-d").run()
 
         then:
         DefaultTestExecutionResult result = new DefaultTestExecutionResult(testDirectory.file('a'))

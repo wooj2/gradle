@@ -81,13 +81,6 @@ public interface ProviderOperationParameters {
     File getProjectDir();
 
     /**
-     * @return When null, use the provider's default value for search upwards.
-     * @since 1.0-milestone-3
-     */
-    @Nullable
-    Boolean isSearchUpwards();
-
-    /**
      * @return When null, use the provider's default value for embedded.
      * @since 1.0-milestone-3
      */
