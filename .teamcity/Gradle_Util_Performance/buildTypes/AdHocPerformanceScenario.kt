@@ -3,7 +3,6 @@ package Gradle_Util_Performance.buildTypes
 import common.Os
 import common.applyPerformanceTestSettings
 import common.buildToolGradleParameters
-import common.builtInRemoteBuildCacheNode
 import common.checkCleanM2
 import common.gradleWrapper
 import common.individualPerformanceTestArtifactRules
@@ -63,13 +62,14 @@ abstract class AdHocPerformanceScenario(os: Os) : BuildType({
             }
         }
 
+        param("env.PERFORMANCE_DB_PASSWORD_TCAGENT", "%performance.db.password.tcagent%")
         param("additional.gradle.parameters", "")
         param("env.ANDROID_HOME", os.androidHome)
     }
 
     steps {
         killGradleProcessesStep(os)
-        substDirOnWindows(os, builtInRemoteBuildCacheNode)
+        substDirOnWindows(os)
         gradleWrapper {
             name = "GRADLE_RUNNER"
             workingDir = os.perfTestWorkingDir
@@ -80,11 +80,10 @@ abstract class AdHocPerformanceScenario(os: Os) : BuildType({
                     """--warmups %warmups% --runs %runs% --checks %checks% --channel %channel% %profiler% %additional.gradle.parameters%""",
                     os
                 ) +
-                    buildToolGradleParameters(isContinue = false) +
-                    builtInRemoteBuildCacheNode.gradleParameters(os)
+                    buildToolGradleParameters(isContinue = false)
                 ).joinToString(separator = " ")
         }
-        removeSubstDirOnWindows(os, builtInRemoteBuildCacheNode)
+        removeSubstDirOnWindows(os)
         checkCleanM2(os)
     }
 })

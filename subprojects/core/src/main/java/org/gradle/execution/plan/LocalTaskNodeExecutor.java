@@ -31,6 +31,7 @@ import org.gradle.internal.reflect.TypeValidationContext;
 
 import java.io.File;
 import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -73,7 +74,7 @@ public class LocalTaskNodeExecutor implements NodeExecutor {
     private void detectMissingDependencies(LocalTaskNode node, TypeValidationContext validationContext) {
         for (String outputPath : node.getMutationInfo().outputPaths) {
             consumedLocations.getNodesRelatedTo(outputPath).stream()
-                .filter(consumerNode -> missesDependency(node, consumerNode))
+                .filter(consumerNode -> hasNoSpecifiedOrder(node, consumerNode))
                 .forEach(consumerWithoutDependency -> collectValidationProblem(node, consumerWithoutDependency, validationContext));
         }
         Set<String> locationsConsumedByThisTask = new LinkedHashSet<>();
@@ -102,9 +103,18 @@ public class LocalTaskNodeExecutor implements NodeExecutor {
         consumedLocations.recordRelatedToNode(node, locationsConsumedByThisTask);
         for (String locationConsumedByThisTask : locationsConsumedByThisTask) {
             producedLocations.getNodesRelatedTo(locationConsumedByThisTask).stream()
-                .filter(producerNode -> missesDependency(producerNode, node))
+                .filter(producerNode -> hasNoSpecifiedOrder(producerNode, node))
                 .forEach(producerWithoutDependency -> collectValidationProblem(producerWithoutDependency, node, validationContext));
         }
+    }
+
+    // In a perfect world, the consumer should depend on the producer.
+    // Though we still don't have a good solution for the code linter and formatter use-case.
+    // And for that case, there will be a cyclic dependency between the analyze and the format task if we only take output/input locations into account.
+    // Therefore, we currently allow these kind of missing dependencies, as long as any order has been specified.
+    // See https://github.com/gradle/gradle/issues/15616.
+    private boolean hasNoSpecifiedOrder(Node producerNode, Node consumerNode) {
+        return missesDependency(producerNode, consumerNode) && missesDependency(consumerNode, producerNode);
     }
 
     private static boolean missesDependency(Node producer, Node consumer) {
@@ -117,27 +127,29 @@ public class LocalTaskNodeExecutor implements NodeExecutor {
             return false;
         }
         // Do a breadth first search for any dependency
-        ArrayDeque<Node> queue = new ArrayDeque<>();
+        Deque<Node> queue = new ArrayDeque<>();
         consumer.getHardSuccessors().forEach(queue::add);
         while (!queue.isEmpty()) {
             Node dependency = queue.removeFirst();
             if (dependency == producer) {
                 return false;
             }
-            dependency.getHardSuccessors().forEach(queue::add);
+            dependency.getHardSuccessors().forEach(node -> {
+                // Using the queue itself for deduplication should be fast enough
+                // since the queue should normally be pretty short.
+                if (!queue.contains(node)) {
+                    queue.add(node);
+                }
+            });
         }
         return true;
     }
 
     private void collectValidationProblem(Node producer, Node consumer, TypeValidationContext validationContext) {
-        // If the consumer and producer are running at the same time, then something is very wrong in the current build.
-        // So we fail the build in that case to expose the problem.
-        TypeValidationContext.Severity severity = producer.isExecuting() && consumer.isExecuting()
-            ? TypeValidationContext.Severity.ERROR
-            : TypeValidationContext.Severity.WARNING;
+        TypeValidationContext.Severity severity = TypeValidationContext.Severity.WARNING;
         validationContext.visitPropertyProblem(
             severity,
-            String.format("%s consumes the output of %s, but does not declare a dependency", consumer, producer)
+            String.format("Task '%s' uses the output of task '%s', without declaring an explicit dependency (using dependsOn or mustRunAfter) or an implicit dependency (declaring task '%s' as an input). This can lead to incorrect results being produced, depending on what order the tasks are executed", consumer, producer, producer)
         );
     }
 }

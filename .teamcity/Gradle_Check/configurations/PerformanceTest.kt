@@ -63,6 +63,7 @@ class PerformanceTest(
             param("performance.baselines", type.defaultBaselines)
             param("performance.channel", performanceTestBuildSpec.channel())
             param("env.ANDROID_HOME", os.androidHome)
+            param("env.PERFORMANCE_DB_PASSWORD_TCAGENT", "%performance.db.password.tcagent%")
             when (os) {
                 Os.WINDOWS -> param("env.PATH", "%env.PATH%;C:/Program Files/7-zip")
                 else -> param("env.PATH", "%env.PATH%:/opt/swift/4.2.3/usr/bin")
@@ -72,7 +73,7 @@ class PerformanceTest(
             steps {
                 preBuildSteps()
                 killGradleProcessesStep(os)
-                substDirOnWindows(os, model.parentBuildCache)
+                substDirOnWindows(os)
 
                 gradleWrapper {
                     name = "GRADLE_RUNNER"
@@ -86,11 +87,10 @@ class PerformanceTest(
                             os
                         ) +
                             buildToolGradleParameters() +
-                            buildScanTag("PerformanceTest") +
-                            model.parentBuildCache.gradleParameters(os)
+                            buildScanTag("PerformanceTest")
                         ).joinToString(separator = " ")
                 }
-                removeSubstDirOnWindows(os, model.parentBuildCache)
+                removeSubstDirOnWindows(os)
                 checkCleanM2(os)
             }
         }

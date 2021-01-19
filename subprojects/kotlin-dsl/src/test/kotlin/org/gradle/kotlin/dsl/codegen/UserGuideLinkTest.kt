@@ -65,10 +65,9 @@ class UserGuideLinkIntegrationTest(
 val linkedPlugins =
     listOf(
         "antlr", "application", "assembler", "assembler-lang",
-        "base", "binary-base", "build-dashboard", "build-init",
+        "base", "build-dashboard", "build-init",
         "c", "c-lang", "checkstyle", "clang-compiler", "codenarc",
         "cpp", "cpp-executable", "cpp-lang", "cpp-library",
-        "component-base", "component-model-base",
         "cunit", "cunit-test-suite",
         "distribution",
         "ear", "eclipse", "eclipse-wtp",
@@ -94,8 +93,7 @@ val linkedPlugins =
 val unlinkedPlugins =
     listOf(
         "coffeescript-base", "envjs", "javascript-base", "jshint",
-        "java-lang", "junit-test-suite", "jvm-component", "jvm-resources",
-        "language-base", "lifecycle-base",
+        "jvm-resources", "language-base", "lifecycle-base",
         "publishing",
         "rhino",
         "scala-lang",
