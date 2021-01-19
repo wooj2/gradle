@@ -330,8 +330,13 @@ public class DefaultDependencyManagementServices implements DependencyManagement
                     featurePreviews);
         }
 
-        RepositoryHandler createRepositoryHandler(Instantiator instantiator, BaseRepositoryFactory baseRepositoryFactory, CollectionCallbackActionDecorator callbackDecorator) {
-            return instantiator.newInstance(DefaultRepositoryHandler.class, baseRepositoryFactory, instantiator, callbackDecorator);
+        RepositoryHandler createRepositoryHandler(Instantiator instantiator, BaseRepositoryFactory baseRepositoryFactory, CollectionCallbackActionDecorator callbackDecorator, DependencyResolutionManagementInternal drm, DomainObjectContext context) {
+            DefaultRepositoryHandler repositoryHandler = instantiator.newInstance(DefaultRepositoryHandler.class, baseRepositoryFactory, instantiator, callbackDecorator);
+            if (!context.isScript() && !context.isDetachedState()) {
+                // Handle centralized repo declaration
+                drm.applyRepositoryRules(repositoryHandler);
+            }
+            return repositoryHandler;
         }
 
         ConfigurationContainerInternal createConfigurationContainer(Instantiator instantiator,
@@ -548,17 +553,17 @@ public class DefaultDependencyManagementServices implements DependencyManagement
         RepositoriesSupplier createRepositoriesSupplier(RepositoryHandler repositoryHandler, DependencyResolutionManagementInternal drm, DomainObjectContext context) {
             return () -> {
                 List<ResolutionAwareRepository> repositories = collectRepositories(repositoryHandler);
-                if (context.isScript() || context.isDetachedState()) {
-                    return repositories;
-                }
-                DependencyResolutionManagementInternal.RepositoriesModeInternal mode = drm.getConfiguredRepositoriesMode();
-                if (mode.useProjectRepositories()) {
-                    if (repositories.isEmpty()) {
-                        repositories = collectRepositories(drm.getRepositories());
-                    }
-                } else {
-                    repositories = collectRepositories(drm.getRepositories());
-                }
+//                if (context.isScript() || context.isDetachedState()) {
+//                    return repositories;
+//                }
+//                DependencyResolutionManagementInternal.RepositoriesModeInternal mode = drm.getConfiguredRepositoriesMode();
+//                if (mode.useProjectRepositories()) {
+//                    if (repositories.isEmpty()) {
+//                        repositories = collectRepositories(drm.getRepositories());
+//                    }
+//                } else {
+//                    repositories = collectRepositories(drm.getRepositories());
+//                }
                 return repositories;
             };
         }

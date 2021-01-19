@@ -210,7 +210,7 @@ class RepositoriesDeclaredInSettingsIntegrationTest extends AbstractModuleDepend
         fails ':checkDeps'
 
         then:
-        failure.assertHasCause("Build was configured to prefer settings repositories over project repositories but repository 'maven' was added by build file 'build.gradle'")
+        failure.assertHasCause("Build was configured to prefer settings repositories over project repositories but repository 'maven2' was added by build file 'build.gradle'")
     }
 
     def "can detect a repository added by a plugin"() {
